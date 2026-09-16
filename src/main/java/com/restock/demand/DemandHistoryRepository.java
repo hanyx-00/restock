@@ -22,4 +22,10 @@ public interface DemandHistoryRepository
 			LocalDate startDate,
 			LocalDate endDate
 	);
+	
+	List<DemandHistory> findAllByItemIdAndDemandDateBetween(
+			Long itemId,
+			LocalDate startDate,
+			LocalDate endDate
+	);
 }
