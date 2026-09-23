@@ -139,11 +139,9 @@ class MrpServiceTest {
 
 		assertThat(motorResult.plannedOrderReceipt())
 				.isEqualByComparingTo("0");
-
+		
 		assertThat(motorResult.plannedOrderReleaseDate())
-				.isEqualTo(
-						LocalDate.of(2026, 9, 24)
-				);
+				.isNull();
 
 		MrpItemResult gearResult =
 				findMaterial(
