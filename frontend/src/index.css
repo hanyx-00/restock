@@ -1,0 +1,116 @@
+@import "tailwindcss";
+
+:root {
+  font-family: Inter, Pretendard, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #18181b;
+  background: #e8ebee;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  --background: #ffffff;
+  --foreground: #18181b;
+  --border: #e4e4e7;
+  --muted: #f4f4f5;
+  --muted-foreground: #71717a;
+  --primary: #18181b;
+  --primary-foreground: #fafafa;
+}
+
+* { box-sizing: border-box; }
+html { background: #e8ebee; }
+body { margin: 0; min-width: 320px; min-height: 100vh; }
+button, input, select { font: inherit; }
+button, a { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+::selection { background: #27272a; color: #fff; }
+
+@layer components {
+  .button-primary,
+  .button-secondary,
+  .button-danger {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: 1px solid transparent;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 1px rgb(255 255 255 / 0.12) inset, 0 2px 5px rgb(15 23 42 / 0.12);
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, transform 150ms ease, box-shadow 150ms ease;
+  }
+
+  .button-primary { border-color: #05070a; background: linear-gradient(180deg, #252a31 0%, #111419 100%); color: #fff; }
+  .button-primary:hover { border-color: #3159d4; background: linear-gradient(180deg, #5478e9 0%, #3159d4 100%); box-shadow: 0 1px 1px rgb(255 255 255 / 0.2) inset, 0 4px 10px rgb(49 89 212 / 0.24); transform: translateY(-1px); }
+  .button-secondary { border-color: #c8cdd2; background: linear-gradient(180deg, #fff 0%, #f3f4f5 100%); color: #3f3f46; }
+  .button-secondary:hover { border-color: #969da5; background: #fff; color: #18181b; transform: translateY(-1px); }
+  .button-danger { background: #b91c1c; color: #fff; }
+  .button-danger:hover { background: #991b1b; }
+  .button-primary:disabled,
+  .button-secondary:disabled,
+  .button-danger:disabled { opacity: 0.55; }
+
+  .button-primary:focus-visible,
+  .button-secondary:focus-visible,
+  .button-danger:focus-visible,
+  .row-action:focus-visible {
+    outline: 2px solid #18181b;
+    outline-offset: 2px;
+  }
+
+  .row-action {
+    display: inline-flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    color: #71717a;
+    border-radius: 0.4rem;
+  }
+  .row-action:hover { background: #e4e4e7; color: #18181b; }
+  .row-action-danger:hover { background: #fef2f2; color: #b91c1c; }
+
+  .form-input {
+    width: 100%;
+    border: 1px solid #d4d4d8;
+    background: #fff;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    color: #18181b;
+    outline: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 2px rgb(15 23 42 / 0.04) inset;
+    transition: border-color 150ms ease, box-shadow 150ms ease;
+  }
+  .form-input::placeholder { color: #a1a1aa; }
+  .form-input:hover { border-color: #a1a1aa; }
+  .form-input:focus { border-color: #4169e1; box-shadow: 0 0 0 3px rgb(65 105 225 / 0.13), 0 1px 2px rgb(15 23 42 / 0.04) inset; }
+
+  .dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow-y: auto;
+    background: rgb(9 12 16 / 0.68);
+    backdrop-filter: blur(6px);
+    padding: 1.25rem;
+  }
+  .dialog-panel {
+    width: min(92vw, 640px);
+    max-height: calc(100vh - 2.5rem);
+    overflow-y: auto;
+    border: 1px solid #a1a1aa;
+    background: #fff;
+    border-radius: 1rem;
+    box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 30px 80px rgb(0 0 0 / 0.28), 0 8px 24px rgb(0 0 0 / 0.14);
+  }
+}
