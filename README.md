@@ -32,27 +32,9 @@
 - JUnit 5
 - Mockito
 - AssertJ
+- H2 (테스트 환경)
 
-## 기술 스택
-
-### Backend
-
-- Java 21
-- Spring Boot 4.1.1
-- Spring Web MVC
-- Spring Data JPA
-- Jakarta Validation
-
-### Database
-
-- PostgreSQL 17
-
-### Build / Test
-
-- Gradle
-- JUnit 5
-- Mockito
-- AssertJ
+테스트 환경에서는 H2 인메모리 데이터베이스를 사용하여 로컬 PostgreSQL 실행 여부와 관계없이 테스트할 수 있습니다.
 
 ## 프로젝트 구조
 
@@ -83,7 +65,6 @@ com.restock
 └─ scenario
    └─ 재고 정책 비교
 ```
-
 
 ## 핵심 기능
 
@@ -145,7 +126,6 @@ Safety Stock = z × σ × √L
 
 ROP = 리드타임 동안의 예상 수요 + 안전재고
 
-
 ### 5. BOM
 
 완제품 1개를 생산할 때 필요한 부품과 수량을 관리합니다.
@@ -156,8 +136,7 @@ ROP = 리드타임 동안의 예상 수요 + 안전재고
 - GEAR × 2
 - BOLT × 8
 
-같은 상위 품목과 구성품 조합의 중복 등록을 방지하며,
-품목이 자기 자신을 직접 구성품으로 등록하는 것도 제한합니다.
+같은 상위 품목과 구성품 조합의 중복 등록을 방지하며, 품목이 자기 자신을 직접 구성품으로 등록하는 것도 제한합니다.
 
 ### 6. 미래 생산계획
 
@@ -173,8 +152,7 @@ ROP = 리드타임 동안의 예상 수요 + 안전재고
 
 ### 7. MRP
 
-MRP(Material Requirements Planning)는 미래 생산계획과 BOM을 이용해
-생산에 필요한 부품 수량과 발주 시점을 계산합니다.
+MRP(Material Requirements Planning)는 미래 생산계획과 BOM을 이용해 생산에 필요한 부품 수량과 발주 시점을 계산합니다.
 
 PRODUCT-A 100개가 필요하고 BOM이 다음과 같다면:
 
@@ -200,19 +178,19 @@ PRODUCT-A 100개가 필요하고 BOM이 다음과 같다면:
 - GEAR = 100
 - BOLT = 300
 
-현재 버전에서는 Lot-for-Lot 방식을 사용하여
-계획입고량을 순소요량과 동일하게 처리합니다.
+현재 버전에서는 Lot-for-Lot 방식을 사용하여 계획입고량을 순소요량과 동일하게 처리합니다.
 
-발주 시점은 각 구성품의 리드타임을 필요일에서 역산하여 계산합니다.
+순소요량이 0보다 큰 경우에만 실제 발주가 필요하다고 판단하며, 각 구성품의 리드타임을 필요일에서 역산하여 발주일을 계산합니다.
 
 발주일 = 필요일 - 리드타임
+
+순소요량이 0인 경우에는 주문이 필요하지 않으므로 발주일은 `null`로 처리합니다.
 
 현재 MRP는 학습을 위해 1단계 BOM을 대상으로 구현했습니다.
 
 ### 8. 재고 정책 시나리오 비교
 
-같은 품목과 수요 데이터를 기준으로
-주문비용과 보관비용을 변경했을 때 계산 결과가 어떻게 달라지는지 비교합니다.
+같은 품목과 수요 데이터를 기준으로 주문비용과 보관비용을 변경했을 때 계산 결과가 어떻게 달라지는지 비교합니다.
 
 예를 들어 기준 정책과 비교 정책을 다음과 같이 설정할 수 있습니다.
 
@@ -234,39 +212,36 @@ PRODUCT-A 100개가 필요하고 BOM이 다음과 같다면:
 
 이를 통해 주문비용이나 보관비용 변화가 EOQ에 어떤 영향을 주는지 확인할 수 있습니다.
 
-현재 구조에서는 비용만 변경할 경우 안전재고와 재주문점은 변하지 않습니다.
-안전재고와 재주문점 계산에는 주문비용과 보관비용이 직접 사용되지 않기 때문입니다.
-
+현재 구조에서는 비용만 변경할 경우 안전재고와 재주문점은 변하지 않습니다. 안전재고와 재주문점 계산에는 주문비용과 보관비용이 직접 사용되지 않기 때문입니다.
 
 ## 주요 API
 
-| Method | Endpoint | 설명 |
-|---|---|---|
-| POST | `/api/items` | 품목 등록 |
-| GET | `/api/items` | 품목 전체 조회 |
-| GET | `/api/items/{id}` | 품목 단건 조회 |
-| PUT | `/api/items/{id}` | 품목 수정 |
-| DELETE | `/api/items/{id}` | 품목 삭제 |
-| POST | `/api/demands` | 수요 이력 등록 |
-| GET | `/api/demands/{id}` | 수요 이력 단건 조회 |
-| GET | `/api/demands/item/{itemId}` | 품목별 수요 이력 조회 |
-| PUT | `/api/demands/{id}` | 수요 이력 수정 |
-| DELETE | `/api/demands/{id}` | 수요 이력 삭제 |
-| GET | `/api/abc?year={year}` | 연도별 ABC 분석 |
-| POST | `/api/inventory-policies/calculate` | EOQ / 안전재고 / 재주문점 계산 |
-| POST | `/api/boms` | BOM 구성품 등록 |
-| GET | `/api/boms/parent/{parentItemId}` | 상위 품목의 BOM 조회 |
-| PUT | `/api/boms/{id}` | BOM 필요수량 수정 |
-| DELETE | `/api/boms/{id}` | BOM 삭제 |
-| POST | `/api/planned-demands` | 미래 생산계획 등록 |
-| GET | `/api/planned-demands` | 미래 생산계획 전체 조회 |
-| GET | `/api/planned-demands/{id}` | 미래 생산계획 단건 조회 |
-| GET | `/api/planned-demands/item/{itemId}` | 품목별 미래 생산계획 조회 |
-| PUT | `/api/planned-demands/{id}` | 미래 생산계획 수정 |
-| DELETE | `/api/planned-demands/{id}` | 미래 생산계획 삭제 |
-| GET | `/api/mrp/planned-demand/{plannedDemandId}` | 생산계획 기준 MRP 계산 |
-| POST | `/api/scenarios/compare` | 두 재고 정책 결과 비교 |
-
+| Method | Endpoint                                    | 설명                           |
+| ------ | ------------------------------------------- | ------------------------------ |
+| POST   | `/api/items`                                | 품목 등록                      |
+| GET    | `/api/items`                                | 품목 전체 조회                 |
+| GET    | `/api/items/{id}`                           | 품목 단건 조회                 |
+| PUT    | `/api/items/{id}`                           | 품목 수정                      |
+| DELETE | `/api/items/{id}`                           | 품목 삭제                      |
+| POST   | `/api/demands`                              | 수요 이력 등록                 |
+| GET    | `/api/demands/{id}`                         | 수요 이력 단건 조회            |
+| GET    | `/api/demands/item/{itemId}`                | 품목별 수요 이력 조회          |
+| PUT    | `/api/demands/{id}`                         | 수요 이력 수정                 |
+| DELETE | `/api/demands/{id}`                         | 수요 이력 삭제                 |
+| GET    | `/api/abc?year={year}`                      | 연도별 ABC 분석                |
+| POST   | `/api/inventory-policies/calculate`         | EOQ / 안전재고 / 재주문점 계산 |
+| POST   | `/api/boms`                                 | BOM 구성품 등록                |
+| GET    | `/api/boms/parent/{parentItemId}`           | 상위 품목의 BOM 조회           |
+| PUT    | `/api/boms/{id}`                            | BOM 필요수량 수정              |
+| DELETE | `/api/boms/{id}`                            | BOM 삭제                       |
+| POST   | `/api/planned-demands`                      | 미래 생산계획 등록             |
+| GET    | `/api/planned-demands`                      | 미래 생산계획 전체 조회        |
+| GET    | `/api/planned-demands/{id}`                 | 미래 생산계획 단건 조회        |
+| GET    | `/api/planned-demands/item/{itemId}`        | 품목별 미래 생산계획 조회      |
+| PUT    | `/api/planned-demands/{id}`                 | 미래 생산계획 수정             |
+| DELETE | `/api/planned-demands/{id}`                 | 미래 생산계획 삭제             |
+| GET    | `/api/mrp/planned-demand/{plannedDemandId}` | 생산계획 기준 MRP 계산         |
+| POST   | `/api/scenarios/compare`                    | 두 재고 정책 결과 비교         |
 
 ## 실행 방법
 
@@ -289,8 +264,7 @@ restock
 
 실제 데이터베이스 비밀번호는 Git에 올리지 않습니다.
 
-프로젝트 루트의 `application-secret.example.yml`을 참고하여
-`application-secret.yml` 파일을 생성합니다.
+프로젝트 루트의 `application-secret.example.yml`을 참고하여 `application-secret.yml` 파일을 생성합니다.
 
 ```yaml
 app:
@@ -322,6 +296,8 @@ spring:
 ```powershell
 .\gradlew test
 ```
+
+테스트 환경에서는 H2 인메모리 데이터베이스를 사용하므로 로컬 PostgreSQL 실행 여부와 관계없이 테스트할 수 있습니다.
 
 ## 현재 구현 범위
 
@@ -357,6 +333,4 @@ Restock은 재고관리 이론을 백엔드 서비스로 직접 구현하고 계
 - 예정입고량 반영
 - 기간별 재고 이월 계산
 - 다양한 Lot Sizing 정책 적용
-- 테스트 전용 데이터베이스 환경 분리
 - Flyway를 이용한 데이터베이스 스키마 버전 관리
-

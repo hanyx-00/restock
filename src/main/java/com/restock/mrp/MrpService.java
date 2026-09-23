@@ -117,12 +117,16 @@ public class MrpService {
 		BigDecimal plannedOrderReceipt =
 				netRequirement;
 		
-		LocalDate plannedOrderReleaseDate =
-				plannedDemand
-						.getRequiredDate()
-						.minusDays(
-								component.getLeadTimeDays()
-						);
+		LocalDate plannedOrderReleaseDate = null;
+		
+		if (netRequirement.compareTo(BigDecimal.ZERO) > 0) {
+			plannedOrderReleaseDate =
+					plannedDemand
+							.getRequiredDate()
+							.minusDays(
+									component.getLeadTimeDays()
+							);
+		}
 		
 		return new MrpItemResult(
 				component.getId(),
