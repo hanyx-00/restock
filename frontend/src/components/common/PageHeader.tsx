@@ -8,9 +8,9 @@ export function PageHeader({ eyebrow = 'RESTOCK', index = '00', title, descripti
       <div className="flex gap-5 md:gap-8">
         <span className="mt-1 h-11 w-1 shrink-0 rounded-full bg-[#4169e1] shadow-[0_0_0_3px_rgba(65,105,225,0.1)]" />
         <div>
-          <p className="mb-3 text-[10px] font-bold tracking-[0.24em] text-zinc-500">{eyebrow} / {index}</p>
-          <h1 className="text-[2.5rem] font-semibold leading-none tracking-[-0.055em] text-zinc-950 md:text-[3.35rem]">{title}</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-600">{description}</p>
+          <p className="mb-3 text-[10px] font-bold tracking-[0.22em] text-zinc-500">{eyebrow} / {index}</p>
+          <h1 className="text-[clamp(2.25rem,5vw,3.35rem)] font-semibold leading-[1.04] tracking-[-0.05em] text-zinc-950">{title}</h1>
+          <p className="mt-4 max-w-2xl text-[15px] leading-6 text-zinc-600">{description}</p>
         </div>
       </div>
       {action && <div className="shrink-0 md:pb-1">{action}</div>}

@@ -18,7 +18,7 @@ export interface InventoryPolicyRequest { itemId: number; year: number; ordering
 export interface InventoryPolicyResponse { itemId: number; itemCode: string; itemName: string; year: number; abcGrade: string; serviceLevel: number; annualDemand: number; averageDailyDemand: number; dailyDemandStandardDeviation: number; economicOrderQuantity: number; safetyStock: number; reorderPoint: number }
 export interface BomRequest { parentItemId: number; componentItemId: number; quantityPer: number }
 export interface BomResponse extends BomRequest { id: number; parentItemCode: string; parentItemName: string; componentItemCode: string; componentItemName: string }
-export interface MrpItemResult { componentItemId: number; componentItemCode: string; componentItemName: string; quantityPer: number; grossRequirement: number; onHandQuantity: number; netRequirement: number; plannedOrderReceipt: number; leadTimeDays: number; requiredDate: string; plannedOrderReleaseDate: string }
+export interface MrpItemResult { componentItemId: number; componentItemCode: string; componentItemName: string; quantityPer: number; grossRequirement: number; onHandQuantity: number; netRequirement: number; plannedOrderReceipt: number; leadTimeDays: number; requiredDate: string; plannedOrderReleaseDate: string | null }
 export interface MrpResponse { plannedDemandId: number; parentItemId: number; parentItemCode: string; parentItemName: string; requiredDate: string; plannedQuantity: number; materials: MrpItemResult[] }
 export interface ScenarioPolicyInput { orderingCost: number; annualHoldingCostPerUnit: number }
 export interface ScenarioCompareRequest { itemId: number; year: number; baseline: ScenarioPolicyInput; alternative: ScenarioPolicyInput }
