@@ -1,128 +1,130 @@
 # RESTOCK
 
-> 재고 데이터를 입력하고 분석해, 생산에 필요한 자재의 수량과 발주 시점을 계산하는 재고 의사결정 시뮬레이터
+> 在庫データを入力・分析し、生産に必要な部品の数量と発注時期を計算する在庫意思決定シミュレーター
 
-RESTOCK은 물류·재고관리 수업에서 배운 개념을 실제 동작하는 시스템으로 구현한 개인 프로젝트입니다. 품목과 과거 수요를 관리하고, ABC 분석과 재고 정책을 계산한 뒤, 생산계획과 BOM을 기반으로 MRP를 수행합니다. 주문비용과 보관비용을 바꿔 정책 결과가 어떻게 달라지는지도 한 화면에서 비교할 수 있습니다.
+[한국어 README](README.ko.md)
 
-## 의사결정 흐름
+RESTOCKは、物流・在庫管理の授業で学んだ概念を、実際に動くシステムとして実装した個人プロジェクトです。品目と過去の需要を管理し、ABC分析と在庫方針を計算したうえで、生産計画とBOMをもとにMRPを実行します。注文費用と保管費用を変えたときに方針の結果がどう変わるかも、一つの画面で比較できます。
+
+## 意思決定の流れ
 
 ```text
-품목 등록 → 수요 이력 축적 → ABC 분석 → EOQ·안전재고·ROP 계산
-                                      ↓
-시나리오 비교 ← 재고 정책 검토       BOM + 생산계획 → MRP → 발주량·발주일 확인
+品目の登録 → 需要履歴の蓄積 → ABC分析 → EOQ・安全在庫・ROPの計算
+                                        ↓
+シナリオ比較 ← 在庫方針の検討         BOM + 生産計画 → MRP → 発注量・発注日の確認
 ```
 
-각 단계는 독립된 계산 예제가 아니라 하나의 데이터 흐름으로 연결됩니다. Dashboard는 등록 품목 수, 총 현재고, 수요 기록 수, 계획 생산량을 실제 API 데이터로 집계합니다.
+各段階は独立した計算例ではなく、一つのデータの流れとしてつながっています。ダッシュボードは、登録品目数・総在庫・需要記録数・計画生産量を、実際のAPIデータで集計します。
 
-## 주요 기능
+## 主な機能
 
-| 기능 | 구현 내용 |
+| 機能 | 実装内容 |
 | --- | --- |
-| Items | 품목 코드, 이름, 단가, 리드타임, 현재고 CRUD |
-| Demand History | 품목별 일자 수요 CRUD, 동일 품목·날짜 중복 방지, 수요 추이 시각화 |
-| ABC Analysis | 연도별 사용가치와 누적 비율을 계산해 A/B/C 등급 분류 |
-| Inventory Policy | 실제 수요 이력과 ABC 등급을 이용해 EOQ, 안전재고, 재주문점 계산 |
-| BOM | 완제품과 구성품의 소요량 CRUD, 중복 및 자기참조 방지 |
-| Planned Demand | 품목별 미래 필요일과 계획수량 CRUD |
-| MRP | 1단계 BOM 전개, 총소요량·순소요량·계획입고량·계획발주일 계산 |
-| Scenario Compare | 기준안과 대안의 주문비용·보관비용에 따른 EOQ/안전재고/ROP 비교 |
-| Dashboard | 품목, 현재고, 수요 이력, 생산계획을 실제 등록 데이터로 집계 |
+| Items | 品目コード、名前、単価、リードタイム、現在庫のCRUD |
+| Demand History | 品目別・日付別の需要のCRUD、同じ品目・同じ日付の重複防止、需要推移の可視化 |
+| ABC Analysis | 年度別の使用金額と累積比率を計算し、A/B/C等級に分類 |
+| Inventory Policy | 実際の需要履歴とABC等級を使い、EOQ・安全在庫・発注点（ROP）を計算 |
+| BOM | 完成品と構成品の所要量のCRUD、重複と自己参照の防止 |
+| Planned Demand | 品目別の将来の必要日と計画数量のCRUD |
+| MRP | 1段階のBOM展開、総所要量・正味所要量・計画入庫量・計画発注日の計算 |
+| Scenario Compare | 基準案と代替案の注文費用・保管費用による、EOQ・安全在庫・ROPの比較 |
+| Dashboard | 品目、現在庫、需要履歴、生産計画を実際の登録データで集計 |
 
-## 핵심 계산 로직
+## 主要な計算ロジック
 
-### ABC 분석
+### ABC分析
 
-품목별 연간 사용가치(`연간 수요량 × 단가`)를 내림차순으로 정렬하고 누적 비율로 등급을 나눕니다.
+品目別の年間使用金額（`年間需要量 × 単価`）を降順に並べ、累積比率で等級を分けます。
 
-- A: 누적 비율 80% 이하
-- B: 80% 초과 95% 이하
-- C: 95% 초과
+- A：累積比率 80% 以下
+- B：80% 超 95% 以下
+- C：95% 超
 
-### 재고 정책
+### 在庫方針
 
 ```text
-EOQ = √(2 × 연간 수요량(D) × 1회 주문비용(S) / 단위당 연간 보관비용(H))
-Safety Stock = z × 일별 수요 표준편차(σ) × √리드타임(L)
-ROP = 일평균 수요 × 리드타임 + Safety Stock
+EOQ = √(2 × 年間需要量(D) × 1回の注文費用(S) / 単位あたりの年間保管費用(H))
+Safety Stock = z × 日別需要の標準偏差(σ) × √リードタイム(L)
+ROP = 日平均需要 × リードタイム + Safety Stock
 ```
 
-일별 수요 표준편차는 해당 연도의 수요가 없는 날짜를 0으로 포함해 계산합니다. 서비스 수준과 z-score는 ABC 등급에 따라 A 99%(2.3263), B 95%(1.6449), C 90%(1.2816)를 적용합니다.
+日別需要の標準偏差は、その年に需要がなかった日を0として含めて計算します。サービス水準とzスコアは、ABC等級に応じて A 99%（2.3263）、B 95%（1.6449）、C 90%（1.2816）を適用します。
 
 ### MRP
 
 ```text
-총소요량(Gross Requirement) = 완제품 계획수량 × 구성품 단위소요량
-순소요량(Net Requirement) = max(총소요량 - 현재고, 0)
-계획입고량(Planned Order Receipt) = 순소요량
-계획발주일(Planned Order Release) = 필요일 - 구성품 리드타임
+総所要量（Gross Requirement）       = 完成品の計画数量 × 構成品の単位所要量
+正味所要量（Net Requirement）       = max(総所要量 - 現在庫, 0)
+計画入庫量（Planned Order Receipt） = 正味所要量
+計画発注日（Planned Order Release） = 必要日 - 構成品のリードタイム
 ```
 
-현재 구현은 1단계 BOM과 Lot-for-Lot 방식을 사용합니다. 순소요량이 0이면 주문이 필요하지 않으므로 계획발주일은 `null`이며, 화면에는 **발주 불필요**로 표시됩니다.
+現在の実装は、1段階のBOMとLot-for-Lot方式を使います。正味所要量が0の場合は発注が不要なため、計画発注日は `null` となり、画面には **発注不要** と表示されます。
 
-## MRP 예시
+## MRPの例
 
-서비스 테스트에 포함된 시나리오입니다. 2026-10-01에 `PRODUCT-A` 100개가 필요하고 BOM이 `MOTOR × 1`, `GEAR × 2`, `BOLT × 8`일 때의 결과입니다.
+サービスのテストに含まれているシナリオです。2026-10-01に `PRODUCT-A` が100個必要で、BOMが `MOTOR × 1`、`GEAR × 2`、`BOLT × 8` の場合の結果です。
 
-| 구성품 | 단위소요량 | 총소요량 | 현재고 | 순소요량 / 계획입고량 | 리드타임 | 계획발주일 |
+| 構成品 | 単位所要量 | 総所要量 | 現在庫 | 正味所要量 / 計画入庫量 | リードタイム | 計画発注日 |
 | --- | ---: | ---: | ---: | ---: | ---: | --- |
-| MOTOR | 1 | 100 | 100 | 0 | 7일 | 발주 불필요 |
-| GEAR | 2 | 200 | 100 | 100 | 5일 | 2026-09-26 |
-| BOLT | 8 | 800 | 500 | 300 | 3일 | 2026-09-28 |
+| MOTOR | 1 | 100 | 100 | 0 | 7日 | 発注不要 |
+| GEAR | 2 | 200 | 100 | 100 | 5日 | 2026-09-26 |
+| BOLT | 8 | 800 | 500 | 300 | 3日 | 2026-09-28 |
 
-MOTOR는 현재고로 전량 충당됩니다. GEAR와 BOLT는 부족 수량을 계획입고량으로 잡고, 필요일에서 각 리드타임을 역산해 발주일을 제시합니다.
+MOTORは現在庫ですべてまかなえます。GEARとBOLTは不足分を計画入庫量とし、必要日から各リードタイムを逆算して発注日を示します。
 
-## 기술 스택
+## 技術スタック
 
-| 구분 | 기술 |
+| 区分 | 技術 |
 | --- | --- |
 | Backend | Java 21, Spring Boot 4.1.1, Spring Web MVC, Spring Data JPA, Jakarta Validation |
 | Frontend | React 19, TypeScript 6, Vite 8, Tailwind CSS 4, TanStack Query, React Hook Form, Zod, Axios |
-| Database | PostgreSQL, H2(Test) |
+| Database | PostgreSQL, H2（テスト） |
 | Test / Build | JUnit 5, Mockito, AssertJ, Gradle, ESLint |
 
-## 구조
+## 構成
 
 ```text
 restock/
 ├─ src/main/java/com/restock/
-│  ├─ item, demand              # 기준정보와 수요 이력
-│  ├─ abc, inventorypolicy      # 분석과 재고 정책 계산
-│  ├─ bom, planneddemand        # BOM과 생산계획
-│  └─ mrp, scenario             # 자재소요계획과 정책 비교
-├─ src/test/                    # H2 설정 및 서비스 계산 테스트
+│  ├─ item, demand              # 基準情報と需要履歴
+│  ├─ abc, inventorypolicy      # 分析と在庫方針の計算
+│  ├─ bom, planneddemand        # BOMと生産計画
+│  └─ mrp, scenario             # 資材所要量計画と方針の比較
+├─ src/test/                    # H2の設定とサービスの計算テスト
 └─ frontend/src/
-   ├─ api, types                # API 클라이언트와 타입
-   ├─ components                # 공통 UI와 레이아웃
-   └─ pages                     # 9개 주요 화면
+   ├─ api, types                # APIクライアントと型
+   ├─ components                # 共通UIとレイアウト
+   └─ pages                     # 主要な9画面
 ```
 
-프론트엔드는 REST API를 호출하고, 백엔드는 Controller–Service–Repository 계층에서 입력 검증, 계산, 영속화를 담당합니다.
+フロントエンドはREST APIを呼び出し、バックエンドはController–Service–Repositoryの各層で、入力の検証・計算・永続化を担当します。
 
-## API 요약
+## API概要
 
-| 영역 | Endpoint | 범위 |
+| 領域 | Endpoint | 範囲 |
 | --- | --- | --- |
-| 품목 | `/api/items` | 등록, 전체/단건 조회, 수정, 삭제 |
-| 수요 이력 | `/api/demands` | 등록, 단건·품목별 조회, 수정, 삭제 |
-| ABC 분석 | `GET /api/abc?year={year}` | 연도별 사용가치와 등급 계산 |
-| 재고 정책 | `POST /api/inventory-policies/calculate` | EOQ, 안전재고, ROP 계산 |
-| BOM | `/api/boms` | 구성품 등록, 상위 품목별 조회, 수량 수정, 삭제 |
-| 생산계획 | `/api/planned-demands` | 등록, 전체/단건·품목별 조회, 수정, 삭제 |
-| MRP | `GET /api/mrp/planned-demand/{id}` | 생산계획 기준 자재소요 계산 |
-| 시나리오 | `POST /api/scenarios/compare` | 기준안과 대안의 정책 결과 비교 |
+| 品目 | `/api/items` | 登録、全件・1件の取得、更新、削除 |
+| 需要履歴 | `/api/demands` | 登録、1件・品目別の取得、更新、削除 |
+| ABC分析 | `GET /api/abc?year={year}` | 年度別の使用金額と等級の計算 |
+| 在庫方針 | `POST /api/inventory-policies/calculate` | EOQ、安全在庫、ROPの計算 |
+| BOM | `/api/boms` | 構成品の登録、親品目別の取得、数量の更新、削除 |
+| 生産計画 | `/api/planned-demands` | 登録、全件・1件・品目別の取得、更新、削除 |
+| MRP | `GET /api/mrp/planned-demand/{id}` | 生産計画にもとづく資材所要量の計算 |
+| シナリオ | `POST /api/scenarios/compare` | 基準案と代替案の方針結果の比較 |
 
-## 실행 방법
+## 実行方法
 
 ### 1. Backend
 
-Java 21과 PostgreSQL이 필요합니다. PostgreSQL에 `restock` 데이터베이스를 만들고, 루트의 `application-secret.example.yml`을 복사해 `application-secret.yml`을 생성합니다.
+Java 21とPostgreSQLが必要です。PostgreSQLに `restock` データベースを作成し、ルートの `application-secret.example.yml` をコピーして `application-secret.yml` を作成します。
 
 ```yaml
 app:
   db-password: "your-postgresql-password"
 ```
 
-기본 연결값은 `localhost:5432`, 데이터베이스 `restock`, 사용자 `postgres`입니다. 비밀번호 파일은 Git 추적 대상에서 제외됩니다.
+既定の接続先は `localhost:5432`、データベース `restock`、ユーザー `postgres` です。パスワードのファイルはGitの追跡対象から除外しています。
 
 ```powershell
 .\gradlew bootRun
@@ -136,28 +138,28 @@ npm install
 npm run dev
 ```
 
-개발 서버는 `/api` 요청을 기본적으로 `http://localhost:8080`으로 프록시합니다. 백엔드 주소가 다르면 실행 전에 `VITE_API_PROXY_TARGET`을 지정할 수 있습니다. 배포처럼 API 기본 경로 자체를 바꿔야 할 때는 `VITE_API_BASE_URL`을 사용합니다.
+開発サーバーは `/api` へのリクエストを、既定で `http://localhost:8080` にプロキシします。バックエンドのアドレスが異なる場合は、実行前に `VITE_API_PROXY_TARGET` を指定できます。デプロイなどでAPIの基本パス自体を変える場合は、`VITE_API_BASE_URL` を使います。
 
-## 테스트 및 검증
+## テストと検証
 
 ```powershell
-# Backend 테스트
+# Backendのテスト
 .\gradlew test
 
-# Frontend 정적 검사와 프로덕션 빌드
+# Frontendの静的チェックと本番ビルド
 cd frontend
 npm run lint
 npm run build
 ```
 
-백엔드 테스트는 H2 인메모리 데이터베이스 설정을 사용하므로 로컬 PostgreSQL과 분리되어 실행됩니다. 서비스 테스트에서는 재고 정책 계산, MRP 전개, 시나리오 차이와 오류 조건을 검증합니다. 프론트엔드 `build`는 TypeScript 검사 후 Vite 프로덕션 번들을 생성합니다.
+バックエンドのテストはH2のインメモリデータベースを使うため、ローカルのPostgreSQLとは切り離して実行されます。サービスのテストでは、在庫方針の計算、MRPの展開、シナリオの差分、エラー条件を検証しています。フロントエンドの `build` は、TypeScriptのチェックのあとにViteの本番バンドルを生成します。
 
-## 현재 범위와 향후 개선
+## 現在の範囲と今後の改善
 
-학습 범위를 명확히 하기 위해 MRP는 1단계 BOM, Lot-for-Lot, 현재고 차감에 집중했습니다. 다음 단계에서는 아래 기능을 확장할 수 있습니다.
+学習の範囲を明確にするため、MRPは1段階のBOM、Lot-for-Lot、現在庫の差し引きに絞りました。次の段階では、以下の機能を拡張できます。
 
-- 다단계 BOM 전개와 순환 참조 탐지
-- Scheduled Receipt 및 기간별 재고 이월 반영
-- 고정 주문량, 최소 주문량 등 Lot Sizing 정책 추가
-- 데이터 규모 증가에 대비한 프론트엔드 code splitting
-- Flyway 기반 데이터베이스 스키마 버전 관리
+- 多段階BOMの展開と循環参照の検出
+- 入荷予定（Scheduled Receipt）と期間ごとの在庫繰り越しの反映
+- 固定発注量・最小発注量などのロットサイズ方針の追加
+- データ規模の増加に備えたフロントエンドのcode splitting
+- Flywayによるデータベーススキーマのバージョン管理
