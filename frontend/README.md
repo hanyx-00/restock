@@ -1,75 +1,42 @@
-# React + TypeScript + Vite
+# RESTOCK Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+RESTOCKは、品目・需要履歴・在庫方針・BOM・生産計画を扱う在庫意思決定シミュレーターです。このディレクトリにはReact / TypeScriptの画面とAPIクライアントが含まれます。計算・永続化はJava / Spring Bootのバックエンドが担当します。プロジェクト全体の説明は[ルートREADME](../README.md)をご覧ください。
 
-Currently, two official plugins are available:
+## 技術
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 / TypeScript 6 / Vite 8
+- Tailwind CSS 4 / TanStack Query
+- React Hook Form / Zod / Axios
 
-## React Compiler
+## 画面
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+`src/pages/` の9画面で、ダッシュボード、品目、需要履歴、ABC分析、在庫方針、BOM、生産計画、MRP、シナリオ比較を提供します。
 
-## Expanding the ESLint configuration
+## ローカル実行
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Node.js 22を推奨します。バックエンドの起動・データベース設定は[ルートREADME](../README.md#実行方法)を参照してください。
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm ci
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://npmx.dev/package/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://npmx.dev/package/eslint-plugin-react-dom) for React-specific lint rules:
+開発時は`/api`が既定で`http://localhost:8080`にプロキシされます。接続先を変える場合は`VITE_API_PROXY_TARGET`、APIの基本パスを変える場合は`VITE_API_BASE_URL`を利用できます。
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 品質チェック
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm run lint
+npm run build
 ```
+
+`build`はTypeScriptのチェックとViteの本番バンドル生成を実行します。[GitHub Actions](../.github/workflows/ci.yml)でも上記2つを自動実行します。バックエンドのJUnitテストはリポジトリルートで`./gradlew test`を実行してください。
+
+## コード構造
+
+- [`src/pages/`](./src/pages/)：9つの画面
+- [`src/api/`](./src/api/)：バックエンドAPI呼び出し
+- [`src/components/`](./src/components/)：共通UI
+- [`src/types/`](./src/types/)：画面・APIの型
+
+計算式とMRPの対象範囲（1段階BOM）は[ルートREADME](../README.md)に記載しています。
