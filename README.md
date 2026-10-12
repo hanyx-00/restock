@@ -154,6 +154,15 @@ npm run build
 
 バックエンドのテストはH2のインメモリデータベースを使うため、ローカルのPostgreSQLとは切り離して実行されます。サービスのテストでは、在庫方針の計算、MRPの展開、シナリオの差分、エラー条件を検証しています。フロントエンドの `build` は、TypeScriptのチェックのあとにViteの本番バンドルを生成します。
 
+### GitHub Actionsによる自動チェック
+
+[CIワークフロー](./.github/workflows/ci.yml)では、`main` ブランチへのpushとPull Requestごとに次を実行します。
+
+- **Backend（Java 21）**：`./gradlew test --no-daemon` でJUnitテストを実行。テスト用H2を使用するため、外部PostgreSQLの接続情報は不要です。
+- **Frontend（Node.js 22）**：`npm ci` → `npm run lint` → `npm run build` を実行し、静的チェックとTypeScript・本番ビルドを確認します。
+
+CIのテストが通っても、実際のPostgreSQL接続・本番環境での運用・性能まで検証したことにはなりません。実行状況は[Actionsページ](https://github.com/hanyx-00/restock/actions)で確認できます。
+
 ## 現在の範囲と今後の改善
 
 学習の範囲を明確にするため、MRPは1段階のBOM、Lot-for-Lot、現在庫の差し引きに絞りました。次の段階では、以下の機能を拡張できます。
